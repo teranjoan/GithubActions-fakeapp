@@ -16,3 +16,5 @@ jobs:
       # Para testing puedes usar valores hardcodeados:
       dockerhub_user: "cuamonga" 
       dockerhub_password: "password"
+    with:
+      environment: "dev"  # o "prd", "stg", "tst"
