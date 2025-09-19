@@ -14,8 +14,8 @@ Agrega aquí información relevante para que los desarrolladores aprovechen GitH
 Agrega tus notas y recomendaciones personalizadas aquí.
 
 
-El Directorio GithubActions tiene el codigo del repositorio https://github.com/teranjoan/GithubActions-cicd.git. Es el encargado de almacenar todo lo relacionado a los actions, jobs, etc.
+El Directorio GithubActions-cicd tiene el codigo del repositorio https://github.com/teranjoan/GithubActions-cicd.git. Es el encargado de almacenar todo lo relacionado a los actions, jobs, etc.
 
-El directorio GithubActions-fakeapp tiene el codigo del repositorio https://github.com/teranjoan/GithubActions-fakeapp.git. Es un ejemplo de una aplicación que utiliza los actions definidos en el directorio GithubActions.
+El directorio GithubActions-fakeapp tiene el codigo del repositorio https://github.com/teranjoan/GithubActions-fakeapp.git. Es un ejemplo de una aplicación que utiliza los actions definidos en el directorio GithubActions-cicd.
 
-Todo lo reutilizable ira en GithubActions y lo específico de la app en GithubActions-fakeapp.
+Todo lo reutilizable ira en GithubActions-cicd y lo específico de la app en GithubActions-fakeapp.

@@ -9,7 +9,7 @@ on:
 
 jobs:
   full-pipeline:
-    uses: ./.github/workflows/full-pipeline.yml
+    uses: teranjoan/GithubActions/.github/workflows/full-pipeline.yml@master
     secrets:
       dockerhub_user: ${{ secrets.DOCKERHUB_USER }}
       dockerhub_password: ${{ secrets.DOCKERHUB_PASSWORD }}
