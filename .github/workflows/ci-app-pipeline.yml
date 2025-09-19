@@ -11,8 +11,8 @@ jobs:
   full-pipeline:
     uses: teranjoan/GithubActions-cicd/.github/workflows/full-pipeline.yml@master
     secrets:
-      dockerhub_user: ${{ secrets.DOCKERHUB_USER }}
-      dockerhub_password: ${{ secrets.DOCKERHUB_PASSWORD }}
+      #dockerhub_user: ${{ secrets.DOCKERHUB_USER }}
+      #dockerhub_password: ${{ secrets.DOCKERHUB_PASSWORD }}
       # Para testing puedes usar valores hardcodeados:
-      # dockerhub_user: "cuamonga" 
-      # dockerhub_password: "password"
+      dockerhub_user: "cuamonga" 
+      dockerhub_password: "password"
