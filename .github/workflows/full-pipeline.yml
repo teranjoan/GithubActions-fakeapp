@@ -2,13 +2,11 @@ name: Full Pipeline
 
 on:
   workflow_call:
-    inputs:
+    secrets:  # Cambiar 'inputs:' por 'secrets:'
       dockerhub_user:
         required: true
-        type: string
       dockerhub_password:
         required: true
-        type: string
 
 jobs:
   build:
@@ -31,12 +29,8 @@ jobs:
       - name: Docker Build & Push
         uses: teranjoan/GithubActions/.github/actions/docker-build-push@master
         with:
-          dockerhub_user: ${{ inputs.dockerhub_user }}
-          dockerhub_password: ${{ inputs.dockerhub_password }}
+          dockerhub_user: ${{ secrets.dockerhub_user }}
+          dockerhub_password: ${{ secrets.dockerhub_password }}
 
   deploy:
     runs-on: ubuntu-latest
-    needs: docker
-    steps:
-      - name: Docker Compose Deploy
-        uses: teranjoan/GithubActions/.github/actions/docker-deploy-compose@master
