@@ -1,0 +1,42 @@
+name: Full Pipeline
+
+on:
+  workflow_call:
+    inputs:
+      dockerhub_user:
+        required: true
+        type: string
+      dockerhub_password:
+        required: true
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build React App
+        uses: teranjoan/GithubActions/.github/actions/build-react@master
+
+  test:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Test React App
+        uses: teranjoan/GithubActions/.github/actions/test-react@master
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Docker Build & Push
+        uses: teranjoan/GithubActions/.github/actions/docker-build-push@master
+        with:
+          dockerhub_user: ${{ inputs.dockerhub_user }}
+          dockerhub_password: ${{ inputs.dockerhub_password }}
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: docker
+    steps:
+      - name: Docker Compose Deploy
+        uses: teranjoan/GithubActions/.github/actions/docker-deploy-compose@master

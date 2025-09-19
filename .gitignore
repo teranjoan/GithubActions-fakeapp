@@ -1,0 +1,13 @@
+# Node
+node_modules/
+build/
+.env
+
+# Docker
+*.log
+docker-compose.override.yml
+
+# Editor
+.vscode/
+.idea/
+.DS_Store
