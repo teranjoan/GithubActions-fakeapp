@@ -1,0 +1,351 @@
+name: GitHub Actions Triggers Demo
+
+# === PUSH TRIGGERS ===
+on:
+  push:
+    # Trigger on specific branches
+    branches:
+      - prd           # Exact branch name
+      - master        # Exact branch name  
+      - main          # Exact branch name
+      - 'prd-*'       # Pattern: any branch starting with 'prd-'
+      - 'release/*'   # Pattern: any branch in release/ folder
+      - 'feature/**'  # Pattern: any nested branch under feature/
+    
+    # Trigger on specific tags
+    tags:
+      - 'prd-*'       # Tags starting with 'prd-'
+      - 'v*'          # Version tags like v1.0.0
+      - 'release-*'   # Release tags
+    
+    # Trigger only when specific paths change
+    paths:
+      - 'src/**'      # Any file in src directory
+      - 'package.json' # Specific file
+      - '.github/workflows/**' # Workflow changes
+    
+    # Ignore specific paths (opposite of paths)
+    paths-ignore:
+      - 'docs/**'     # Ignore documentation changes
+      - '*.md'        # Ignore markdown files
+      - '.gitignore'  # Ignore gitignore changes
+
+  # === PULL REQUEST TRIGGERS ===
+  pull_request:
+    # Types of PR events to trigger on
+    types:
+      - opened        # When PR is created
+      - synchronize   # When new commits are pushed to PR
+      - reopened      # When PR is reopened
+      - ready_for_review # When draft PR becomes ready
+      - closed        # When PR is closed (merged or just closed)
+    
+    # Same branch and path filters as push
+    branches:
+      - main
+      - master
+      - 'release/*'
+    
+    paths:
+      - 'src/**'
+      - 'tests/**'
+
+  # === MANUAL TRIGGERS ===
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        type: choice
+        default: 'dev'
+        options:
+          - dev
+          - staging
+          - prd
+      
+      version:
+        description: 'Version to deploy'
+        required: false
+        type: string
+        default: 'latest'
+      
+      dry_run:
+        description: 'Perform dry run only'
+        required: false
+        type: boolean
+        default: false
+      
+      custom_message:
+        description: 'Custom deployment message'
+        required: false
+        type: string
+
+  # === SCHEDULED TRIGGERS ===
+  # schedule:
+  #   # Cron syntax: minute hour day month day-of-week
+  #   - cron: '0 9 * * 1-5'    # Monday to Friday at 9:00 AM UTC
+  #   - cron: '0 0 * * 0'      # Every Sunday at midnight UTC
+  #   - cron: '0 */6 * * *'    # Every 6 hours
+  #   - cron: '30 2 1 * *'     # First day of month at 2:30 AM UTC
+
+  # === REPOSITORY EVENTS ===
+  # release:
+  #   types:
+  #     - published     # When release is published
+  #     - created       # When release is created
+  #     - edited        # When release is edited
+
+  # issues:
+  #   types:
+  #     - opened        # When issue is created
+  #     - labeled       # When label is added
+  #     - assigned      # When someone is assigned
+
+  # === WORKFLOW TRIGGERS ===
+  
+  # In GitHub Actions, workflow_call is a trigger that allows one workflow to be called from another workflow. This is useful for creating reusable workflows, enabling modular CI/CD pipelines.
+
+  # Key concepts:
+
+  # Reusable workflows: You define a workflow that can be invoked by other workflows using workflow_call.
+  # Inputs and secrets: You can specify inputs and secrets that the calling workflow passes to the called workflow.
+  # Usage: The calling workflow uses the uses: keyword to reference the reusable workflow.
+  # Example definition:
+
+  workflow_call:
+    inputs:
+      caller_environment:
+        description: 'Environment from calling workflow'
+        required: false
+        type: string
+        default: 'unknown'
+    
+    secrets:
+      deployment_token:
+        required: false
+
+jobs:
+  # Show trigger information
+  trigger_info:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Display trigger information
+        run: |
+          echo "🎯 === TRIGGER INFORMATION ==="
+          echo "Event Name: ${{ github.event_name }}"
+          echo "Repository: ${{ github.repository }}"
+          echo "Actor: ${{ github.actor }}"
+          echo "Ref: ${{ github.ref }}"
+          echo "Ref Name: ${{ github.ref_name }}"
+          echo "Ref Type: ${{ github.ref_type }}"
+          echo "SHA: ${{ github.sha }}"
+          echo "Workflow: ${{ github.workflow }}"
+          echo "Job: ${{ github.job }}"
+          echo "Run ID: ${{ github.run_id }}"
+          echo "Run Number: ${{ github.run_number }}"
+          echo "=============================="
+
+  # Handle different trigger types
+  push_handler:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - name: Handle push event
+        run: |
+          echo "📤 PUSH EVENT DETECTED"
+          echo "Branch/Tag: ${{ github.ref_name }}"
+          echo "Ref Type: ${{ github.ref_type }}"
+          
+          if [[ "${{ github.ref_type }}" == "branch" ]]; then
+            echo "🌿 This is a branch push"
+            
+            case "${{ github.ref_name }}" in
+              "prd"|"master"|"main")
+                echo "🚀 Production branch detected - triggering production deployment"
+                ;;
+              prd-*)
+                echo "🔧 Production feature branch detected"
+                ;;
+              release/*)
+                echo "📦 Release branch detected"
+                ;;
+              feature/*)
+                echo "⚡ Feature branch detected"
+                ;;
+              *)
+                echo "📝 Other branch detected"
+                ;;
+            esac
+          else
+            echo "🏷️ This is a tag push"
+            
+            case "${{ github.ref_name }}" in
+              prd-*)
+                echo "🚀 Production tag detected - triggering production release"
+                ;;
+              v*)
+                echo "📦 Version tag detected"
+                ;;
+              *)
+                echo "🏷️ Other tag detected"
+                ;;
+            esac
+          fi
+
+  pull_request_handler:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Handle pull request event
+        run: |
+          echo "🔀 PULL REQUEST EVENT DETECTED"
+          echo "Action: ${{ github.event.action }}"
+          echo "PR Number: ${{ github.event.number }}"
+          echo "Source Branch: ${{ github.event.pull_request.head.ref }}"
+          echo "Target Branch: ${{ github.event.pull_request.base.ref }}"
+          echo "Title: ${{ github.event.pull_request.title }}"
+          echo "Draft: ${{ github.event.pull_request.draft }}"
+          
+          case "${{ github.event.action }}" in
+            "opened")
+              echo "🆕 New PR opened - running initial checks"
+              ;;
+            "synchronize")
+              echo "🔄 PR updated - running tests"
+              ;;
+            "ready_for_review")
+              echo "👀 PR ready for review - running full validation"
+              ;;
+            "closed")
+              if [[ "${{ github.event.pull_request.merged }}" == "true" ]]; then
+                echo "✅ PR merged - running post-merge actions"
+              else
+                echo "❌ PR closed without merge - cleanup"
+              fi
+              ;;
+          esac
+
+  manual_trigger_handler:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Handle manual trigger
+        run: |
+          echo "👤 MANUAL TRIGGER DETECTED"
+          echo "Environment: ${{ github.event.inputs.environment }}"
+          echo "Version: ${{ github.event.inputs.version }}"
+          echo "Dry Run: ${{ github.event.inputs.dry_run }}"
+          echo "Message: ${{ github.event.inputs.custom_message }}"
+          
+          if [[ "${{ github.event.inputs.dry_run }}" == "true" ]]; then
+            echo "🧪 Performing dry run deployment"
+          else
+            echo "🚀 Performing actual deployment"
+          fi
+
+  scheduled_handler:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    steps:
+      - name: Handle scheduled event
+        run: |
+          echo "⏰ SCHEDULED EVENT DETECTED"
+          echo "Current time: $(date)"
+          echo "Day of week: $(date +%u)"
+          echo "Hour: $(date +%H)"
+          
+          # Different actions based on time
+          HOUR=$(date +%H)
+          DOW=$(date +%u)
+          
+          if [[ $DOW -le 5 && $HOUR -eq 9 ]]; then
+            echo "🌅 Daily morning maintenance (Mon-Fri 9 AM)"
+          elif [[ $DOW -eq 7 && $HOUR -eq 0 ]]; then
+            echo "🗓️ Weekly maintenance (Sunday midnight)"
+          else
+            echo "🔄 Regular scheduled maintenance"
+          fi
+
+  release_handler:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release'
+    steps:
+      - name: Handle release event
+        run: |
+          echo "🎉 RELEASE EVENT DETECTED"
+          echo "Action: ${{ github.event.action }}"
+          echo "Release Name: ${{ github.event.release.name }}"
+          echo "Tag: ${{ github.event.release.tag_name }}"
+          echo "Draft: ${{ github.event.release.draft }}"
+          echo "Prerelease: ${{ github.event.release.prerelease }}"
+          
+          if [[ "${{ github.event.action }}" == "published" ]]; then
+            echo "📢 Release published - triggering deployment"
+          fi
+
+  workflow_call_handler:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_call'
+    steps:
+      - name: Handle workflow call
+        run: |
+          echo "📞 WORKFLOW CALL DETECTED"
+          echo "Caller Environment: ${{ inputs.caller_environment }}"
+          echo "Called by another workflow"
+
+  # Advanced trigger patterns
+  conditional_job:
+    runs-on: ubuntu-latest
+    # Complex conditions
+    if: |
+      (github.event_name == 'push' && 
+       (startsWith(github.ref, 'refs/heads/prd') || 
+        github.ref == 'refs/heads/main' || 
+        github.ref == 'refs/heads/master')) ||
+      (github.event_name == 'pull_request' && 
+       github.event.action == 'opened' &&
+       github.event.pull_request.base.ref == 'main')
+    steps:
+      - name: Complex conditional logic
+        run: |
+          echo "🎯 COMPLEX CONDITION MET"
+          echo "This job runs when:"
+          echo "- Push to prd*, main, or master branches"
+          echo "- OR new PR opened targeting main"
+          
+  # Path-based conditional job
+  frontend_changes:
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'push' &&
+      contains(github.event.head_commit.modified, 'src/') ||
+      contains(github.event.head_commit.added, 'src/') ||
+      contains(github.event.head_commit.removed, 'src/')
+    steps:
+      - name: Handle frontend changes
+        run: |
+          echo "🎨 FRONTEND CHANGES DETECTED"
+          echo "Modified files in src/ directory"
+          echo "Running frontend-specific tasks"
+
+  summary:
+    runs-on: ubuntu-latest
+    needs: [trigger_info]
+    if: always()
+    steps:
+      - name: Trigger summary
+        run: |
+          echo "📊 === TRIGGER SUMMARY ==="
+          echo ""
+          echo "🎯 Supported triggers in this workflow:"
+          echo "  ✅ Push to branches: prd, master, main, prd-*, release/*, feature/**"
+          echo "  ✅ Push to tags: prd-*, v*, release-*"
+          echo "  ✅ Pull requests on main/master/release/*"
+          echo "  ✅ Manual workflow dispatch with inputs"
+          echo "  ✅ Scheduled runs (daily, weekly, every 6h)"
+          echo "  ✅ Release events"
+          echo "  ✅ Issue events"
+          echo "  ✅ Workflow calls from other workflows"
+          echo ""
+          echo "🔍 Current trigger: ${{ github.event_name }}"
+          echo "=============================="
